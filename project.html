@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResQNet Project</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="loader">
+    <h2>Loading Project...</h2>
+  </div>
+
+  <nav class="hidden">
+    <h1>ResQNet</h1>
+    <a href="index.html" class="nav-btn">← Back to Dashboard</a>
+  </nav>
+
+  <section class="project-page hidden">
+    <div class="card">
+      <h2>Designing a Secure Communication Protocol for Disaster Relief Networks</h2>
+      <p class="subtitle">A ResQNet Project | BCSE308L - Computer Networks</p>
+      <hr />
+
+      <div class="project-nav">
+        <button class="tab-btn active" data-target="overview">Overview</button>
+        <button class="tab-btn" data-target="background">Background</button>
+        <button class="tab-btn" data-target="motivation">Motivation</button>
+        <button class="tab-btn" data-target="problem">Problem</button>
+        <button class="tab-btn" data-target="techniques">Techniques</button>
+        <button class="tab-btn" data-target="results">Results</button>
+      </div>
+
+      <!-- Overview -->
+      <div id="overview" class="tab-content active">
+        <h3>Area & Domain of Research</h3>
+        <p><b>Area:</b> Computer Networks</p>
+        <p><b>Domain:</b> Secure Protocols & Emergency Communication Systems</p>
+
+        <h3>Objective</h3>
+        <p>
+          The aim of this project is to develop a secure, lightweight, and reliable communication protocol that can function during natural disasters when regular telecom infrastructure is unavailable.
+          The protocol will work over a mesh network, allowing encrypted device-to-device (D2D) communication among rescue teams.
+          The project also includes a digital storytelling component to visualize the disaster situation and the effectiveness of our solution.
+        </p>
+
+          <div class="diagram">
+            <h3>Working Video</h3>
+            <video src="CN PROJECT.mp4" autoplay muted loop playsinline controls></video>
+          </div>
+    </div>
+
+      <!-- Background -->
+      <div id="background" class="tab-content">
+        <h3>Background / Short Description</h3>
+        <p>
+          Natural disasters often damage mobile towers, power lines, and internet services, causing a total breakdown of communication.
+          In such cases, emergency responders need a secure, decentralized method to coordinate rescue operations.
+          Traditional methods like walkie-talkies lack encryption and scalability.
+          Our proposed solution aims to fill this gap using principles of computer networks and lightweight encryption.
+        </p>
+      </div>
+
+      <!-- Motivation -->
+      <div id="motivation" class="tab-content">
+        <h3>Motivation</h3>
+        <p><b>Why is this important?</b> Communication is critical in emergencies; delays can cost lives.</p>
+        <p><b>Who benefits?</b> Emergency responders, disaster management teams, affected civilians.</p>
+        <p><b>Impact:</b> Improves disaster readiness, supports SDG 9 (resilient infrastructure), and lays the foundation for scalable emergency systems.</p>
+      </div>
+
+      <!-- Problem -->
+      <div id="problem" class="tab-content">
+        <h3>Problem Statement</h3>
+        <p>
+          How can we ensure secure and reliable communication between disaster relief workers when the internet and telecom networks are unavailable?
+        </p>
+      </div>
+
+      <!-- Techniques -->
+      <div id="techniques" class="tab-content">
+        <h3>Prevailing Techniques & Our Innovation</h3>
+        <p><b>Existing Solutions:</b></p>
+        <ul>
+          <li>Walkie-talkies (not encrypted)</li>
+          <li>Satellite phones (expensive, limited access)</li>
+          <li>HAM radio (requires licensing and setup time)</li>
+        </ul>
+
+        <p><b>Our Innovation:</b></p>
+        <ul>
+          <li>Cost-effective, encrypted communication protocol</li>
+          <li>Uses existing mobile hardware or IoT nodes</li>
+          <li>Mesh-based network — no single point of failure</li>
+        </ul>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="tab-content">
+        <h3>Expected Inputs / Outputs / Results</h3>
+        <p><b>Inputs:</b> Device identifiers, encryption key, message content</p>
+        <p><b>Outputs:</b> Encrypted message sent through mesh; decrypted at destination</p>
+        <p><b>Result:</b> Successful transmission of rescue messages over a disaster-resilient secure protocol</p>
+
+        <h3>Outcome</h3>
+        <p>
+          A conceptual secure disaster communication protocol that enables encrypted D2D communication
+          in disconnected environments, improving coordination and safety during disasters.
+        </p>
+
+        <div class="demo">
+          <h3>!  Working Demo  !</h3>
+          <button class="demo-btn">Launch Simulation</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="hidden">
+    <p>© 2025 ResQNet | VIT Chennai</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

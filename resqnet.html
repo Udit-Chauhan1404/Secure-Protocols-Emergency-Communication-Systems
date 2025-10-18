@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ResQNet — Secure D2D Simulator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <h1>ResQNet</h1>
+    <a href="project.html" class="nav-btn">← Back to Project</a>
+  </nav>
+
+  <main class="sim-page">
+    <div class="sim-panel card">
+      <h2>ResQNet Secure D2D Communication Simulator</h2>
+      <p class="subtitle">Demonstration: encrypted message transfer across a mesh network</p>
+
+      <div class="sim-grid">
+        <!-- NETWORK PANEL -->
+        <div class="network-panel">
+          <div class="net-stage" id="net-stage">
+            <!-- Node elements -->
+            <div class="node" id="nodeA" data-label="Node A">A</div>
+            <div class="node" id="nodeB" data-label="Node B">B</div>
+            <div class="node" id="nodeC" data-label="Node C">C</div>
+            <div class="node" id="nodeD" data-label="Node D">D</div>
+
+            <!-- packet container (created dynamically by JS) -->
+          </div>
+
+          <div class="legend">
+            <small>Nodes represent devices/field units. Lines show mesh connectivity.</small>
+          </div>
+        </div>
+
+        <!-- CONTROL / LOG PANEL -->
+        <div class="control-panel">
+          <div class="controls">
+            <label>Sender
+              <select id="senderSelect">
+                <option value="nodeA">Node A</option>
+                <option value="nodeB">Node B</option>
+                <option value="nodeC">Node C</option>
+                <option value="nodeD">Node D</option>
+              </select>
+            </label>
+
+            <label>Receiver
+              <select id="receiverSelect">
+                <option value="nodeB">Node B</option>
+                <option value="nodeA">Node A</option>
+                <option value="nodeC">Node C</option>
+                <option value="nodeD">Node D</option>
+              </select>
+            </label>
+
+            <label>Passphrase
+              <input id="passphrase" type="text" value="ResQNetKey2025" />
+              <small class="muted">Shared key (for demo). Change to simulate different sessions.</small>
+            </label>
+
+            <label>Message
+              <input id="messageInput" type="text" placeholder="Type message e.g. HELP" />
+            </label>
+
+            <button id="sendBtn" class="demo-btn">Send Secure Message</button>
+
+            <div class="encryption-output">
+              <p><b>Encrypted (base64):</b></p>
+              <textarea id="encryptedText" readonly rows="3"></textarea>
+              <p><b>Decrypted at Receiver:</b> <span id="decryptedText">—</span></p>
+            </div>
+          </div>
+
+          <div class="log">
+            <h4>Message Log</h4>
+            <table id="logTable">
+              <thead>
+                <tr><th>Time</th><th>Sender</th><th>Receiver</th><th>Encrypted</th><th>Decrypted</th><th>Status</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 ResQNet | VIT Chennai</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
