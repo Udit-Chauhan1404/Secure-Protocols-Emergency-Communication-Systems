@@ -135,7 +135,7 @@ const demoBtn = document.querySelector(".demo-btn");
      Supports concurrent packets. */
   function animatePacketBezier(fromEl, toEl, message = "", opts = {}) {
     const {
-      duration = 1100,
+      duration = 900,
       curveOffset = 80,   // how high the curve arches
       labelMax = 12       // max chars for label
     } = opts;
@@ -154,6 +154,8 @@ const demoBtn = document.querySelector(".demo-btn");
       packet.style.borderRadius = "50%";
       packet.style.pointerEvents = "none";
       packet.style.zIndex = "999";
+      packet.style.background = "#0ae3d8";
+      packet.style.boxShadow = "0 0 14px rgba(0,255,255,0.7)";
 
       // Create label
       const label = document.createElement("div");
@@ -167,7 +169,6 @@ const demoBtn = document.querySelector(".demo-btn");
       label.style.borderRadius = "6px";
       label.style.whiteSpace = "nowrap";
       label.style.transform = "translate(-50%, -100%)";
-      // keep label colors consistent with your CSS (no neon here)
       label.style.background = "#e3fffe";
       label.style.color = "#052024";
       label.style.boxSizing = "border-box";
@@ -227,8 +228,8 @@ const demoBtn = document.querySelector(".demo-btn");
           requestAnimationFrame(step);
         } else {
           // arrival effects: fade out packet & label, highlight receiver
-          packet.style.transition = "opacity 260ms ease, transform 260ms ease";
-          label.style.transition = "opacity 260ms ease, transform 260ms ease";
+          packet.style.transition = "opacity 240ms ease, transform 240ms ease";
+          label.style.transition = "opacity 240ms ease, transform 240ms ease";
           packet.style.opacity = "0";
           label.style.opacity = "0";
 
@@ -286,7 +287,73 @@ const demoBtn = document.querySelector(".demo-btn");
   // small helper to map node id -> element
   function nodeEl(id) { return document.getElementById(id); }
 
-  // Handle send: allow concurrent packets (no await on animatePacketBezier besides updating logs)
+  /* ---------------- Network Graph + Routing ---------------- */
+
+  // topology: connect neighbors in a 3x3 grid (A B C / D E F / G H I)
+  // edges are bidirectional with weight 1 (you can change weights to simulate link cost)
+  const networkEdges = [
+    ["nodeA","nodeB",1], ["nodeB","nodeC",1],
+    ["nodeD","nodeE",1], ["nodeE","nodeF",1],
+    ["nodeG","nodeH",1], ["nodeH","nodeI",1],
+    ["nodeA","nodeD",1], ["nodeB","nodeE",1], ["nodeC","nodeF",1],
+    ["nodeD","nodeG",1], ["nodeE","nodeH",1], ["nodeF","nodeI",1],
+    // add a few diagonal links for richness (optional)
+    ["nodeA","nodeE",1], ["nodeC","nodeE",1], ["nodeG","nodeE",1], ["nodeI","nodeE",1]
+  ];
+
+  // Build adjacency list
+  const graph = {};
+  for (const [a,b,w] of networkEdges) {
+    if (!graph[a]) graph[a] = [];
+    if (!graph[b]) graph[b] = [];
+    graph[a].push({ node: b, weight: w });
+    graph[b].push({ node: a, weight: w });
+  }
+
+  // Dijkstra algorithm (returns array of node ids in path order)
+  function shortestPath(start, goal) {
+    if (!graph[start] || !graph[goal]) return null;
+    const dist = {}, prev = {};
+    const visited = new Set();
+    // priority set simulated with simple loop since N is small
+    const nodes = Object.keys(graph);
+    for (const n of nodes) dist[n] = Infinity;
+    dist[start] = 0;
+
+    while (visited.size < nodes.length) {
+      // pick unvisited node with smallest dist
+      let u = null;
+      for (const n of nodes) {
+        if (visited.has(n)) continue;
+        if (u === null || dist[n] < dist[u]) u = n;
+      }
+      if (u === null || dist[u] === Infinity) break;
+      visited.add(u);
+      if (u === goal) break;
+
+      for (const { node: v, weight } of graph[u] || []) {
+        if (visited.has(v)) continue;
+        const alt = dist[u] + weight;
+        if (alt < dist[v]) {
+          dist[v] = alt;
+          prev[v] = u;
+        }
+      }
+    }
+
+    if (dist[goal] === Infinity) return null;
+    // reconstruct path
+    const path = [];
+    let cur = goal;
+    while (cur) {
+      path.unshift(cur);
+      if (cur === start) break;
+      cur = prev[cur];
+    }
+    return path;
+  }
+
+  // Handle send: now with shortest-path hop-by-hop animation
   async function handleSend() {
     const senderId = senderSelect.value;
     const receiverId = receiverSelect.value;
@@ -316,18 +383,35 @@ const demoBtn = document.querySelector(".demo-btn");
       return;
     }
 
-    // start packet animation (do not await to allow concurrency)
-    const fromEl = nodeEl(senderId);
-    const toEl = nodeEl(receiverId);
-    if (fromEl) fromEl.style.transform = "translateY(-6px)"; // small send visual
-    setTimeout(() => { if (fromEl) fromEl.style.transform = ""; }, 180);
+    // compute path
+    const path = shortestPath(senderId, receiverId);
+    if (!path || path.length < 2) {
+      alert("No path found between selected nodes.");
+      // restore UI and exit
+      sendBtn.disabled = false;
+      sendBtn.textContent = prevText;
+      return;
+    }
 
-    // animate packet (concurrent)
-    animatePacketBezier(fromEl || { }, toEl || { }, plaintext, { duration: 1200, curveOffset: 80 }).catch(e => {
-      console.warn("packet animation error", e);
-    });
+    // small visual send pulse at sender
+    const senderEl = nodeEl(senderId);
+    if (senderEl) {
+      senderEl.style.transform = "translateY(-6px)";
+      setTimeout(() => { senderEl.style.transform = ""; }, 180);
+    }
 
-    // try decrypt (simulate receiver)
+    // animate hop-by-hop sequentially (await each hop)
+    for (let i = 0; i < path.length - 1; i++) {
+      const hopFrom = nodeEl(path[i]);
+      const hopTo = nodeEl(path[i+1]);
+      try {
+        await animatePacketBezier(hopFrom || { }, hopTo || { }, plaintext, { duration: 800, curveOffset: 60 });
+      } catch (e) {
+        console.warn("animate hop error", e);
+      }
+    }
+
+    // simulate receiver decryption
     let decrypted = null;
     try {
       const receiverKey = await deriveKeyFromPassphrase(pass);
@@ -338,7 +422,7 @@ const demoBtn = document.querySelector(".demo-btn");
       if (decTextEl) decTextEl.textContent = "[DECRYPTION FAILED]";
     }
 
-    // Log entry (immediately)
+    // Log entry (after animation)
     const row = document.createElement("tr");
     const timeStr = new Date().toLocaleTimeString();
     row.innerHTML = `
@@ -371,7 +455,6 @@ const demoBtn = document.querySelector(".demo-btn");
 
   // visual: draw thin connecting lines between nodes using SVG for clarity
   (function drawConnections() {
-    // create one canvas-like overlay of SVG lines (only if net-stage exists)
     const stage = netStage;
     if (!stage) return;
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -382,21 +465,12 @@ const demoBtn = document.querySelector(".demo-btn");
     svg.style.pointerEvents = "none";
     stage.appendChild(svg);
 
-    const connectPairs = [
-      ["nodeA", "nodeB"],
-      ["nodeA", "nodeC"],
-      ["nodeA", "nodeD"],
-      ["nodeB", "nodeC"],
-      ["nodeB", "nodeD"],
-      ["nodeC", "nodeD"]
-    ];
-
     function refreshLines() {
       while (svg.firstChild) svg.removeChild(svg.firstChild);
-      connectPairs.forEach(([a,b]) => {
+      for (const [a,b] of networkEdges) {
         const elA = nodeEl(a);
         const elB = nodeEl(b);
-        if (!elA || !elB) return;
+        if (!elA || !elB) continue;
         const p1 = getNodeCenter(elA);
         const p2 = getNodeCenter(elB);
         const line = document.createElementNS("http://www.w3.org/2000/svg","line");
@@ -406,19 +480,18 @@ const demoBtn = document.querySelector(".demo-btn");
         line.setAttribute("y2", p2.y);
         line.setAttribute("stroke", "rgba(0,230,230,0.12)");
         line.setAttribute("stroke-width", "2");
+        line.setAttribute("stroke-linecap", "round");
         svg.appendChild(line);
-      });
+      }
     }
 
-    // initial draw and on resize
     refreshLines();
     window.addEventListener("resize", () => setTimeout(refreshLines, 120));
-    // small delay in case fonts/DOM settle
     setTimeout(refreshLines, 300);
   })();
 
   // small accessibility: clicking a node selects it as sender (shift-click selects receiver)
-  ["nodeA","nodeB","nodeC","nodeD"].forEach(id => {
+  ["nodeA","nodeB","nodeC","nodeD","nodeE","nodeF","nodeG","nodeH","nodeI"].forEach(id => {
     const el = nodeEl(id);
     if (!el) return;
     el.addEventListener("click",(ev) => {
