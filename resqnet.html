@@ -5,6 +5,59 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ResQNet — Secure D2D Simulator</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* minimal local styles to help the 9-node layout */
+    .net-stage {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      background: rgba(0, 40, 40, 0.06);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    /* place nodes in a 3x3 visual grid using absolute positions for clarity */
+    .node { 
+      position: absolute;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      background: linear-gradient(145deg, #0ae3d8, #065e63);
+      color: #042d31;
+      box-shadow: 0 4px 14px rgba(0,255,255,0.12);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .node:hover { transform: scale(1.06); box-shadow: 0 10px 24px rgba(0,255,255,0.16); }
+    /* grid positions (top-left → top-right, middle, bottom) */
+    #nodeA { left: 8%; top: 8%; }
+    #nodeB { left: 44%; top: 8%; transform: translateX(-50%); }
+    #nodeC { right: 8%; top: 8%; }
+    #nodeD { left: 8%; top: 44%; transform: translateY(-50%); }
+    #nodeE { left: 44%; top: 44%; transform: translate(-50%,-50%); }
+    #nodeF { right: 8%; top: 44%; transform: translateY(-50%); }
+    #nodeG { left: 8%; bottom: 8%; }
+    #nodeH { left: 44%; bottom: 8%; transform: translateX(-50%); }
+    #nodeI { right: 8%; bottom: 8%; }
+    /* packet label style created by JS can be tuned via .packet-label, and .packet is set inline */
+    .packet-label {
+      pointer-events: none;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      background: #e3fffe;
+      color: #052024;
+      z-index: 1000;
+      position: absolute;
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -17,17 +70,20 @@
       <h2>ResQNet Secure D2D Communication Simulator</h2>
       <p class="subtitle">Demonstration: encrypted message transfer across a mesh network</p>
 
-      <div class="sim-grid">
+      <div class="sim-grid" style="display:flex;gap:20px;flex-wrap:wrap;">
         <!-- NETWORK PANEL -->
-        <div class="network-panel">
+        <div class="network-panel" style="flex:1;min-width:420px;">
           <div class="net-stage" id="net-stage">
-            <!-- Node elements -->
+            <!-- 9 Node elements -->
             <div class="node" id="nodeA" data-label="Node A">A</div>
             <div class="node" id="nodeB" data-label="Node B">B</div>
             <div class="node" id="nodeC" data-label="Node C">C</div>
             <div class="node" id="nodeD" data-label="Node D">D</div>
-
-            <!-- packet container (created dynamically by JS) -->
+            <div class="node" id="nodeE" data-label="Node E">E</div>
+            <div class="node" id="nodeF" data-label="Node F">F</div>
+            <div class="node" id="nodeG" data-label="Node G">G</div>
+            <div class="node" id="nodeH" data-label="Node H">H</div>
+            <div class="node" id="nodeI" data-label="Node I">I</div>
           </div>
 
           <div class="legend">
@@ -36,23 +92,35 @@
         </div>
 
         <!-- CONTROL / LOG PANEL -->
-        <div class="control-panel">
-          <div class="controls">
+        <div class="control-panel" style="width:420px;">
+          <div class="controls" style="display:flex;flex-direction:column;gap:8px;">
             <label>Sender
               <select id="senderSelect">
+                <option value="">Select Sender</option>
                 <option value="nodeA">Node A</option>
                 <option value="nodeB">Node B</option>
                 <option value="nodeC">Node C</option>
                 <option value="nodeD">Node D</option>
+                <option value="nodeE">Node E</option>
+                <option value="nodeF">Node F</option>
+                <option value="nodeG">Node G</option>
+                <option value="nodeH">Node H</option>
+                <option value="nodeI">Node I</option>
               </select>
             </label>
 
             <label>Receiver
               <select id="receiverSelect">
-                <option value="nodeB">Node B</option>
+                <option value="">Select Receiver</option>
                 <option value="nodeA">Node A</option>
+                <option value="nodeB">Node B</option>
                 <option value="nodeC">Node C</option>
                 <option value="nodeD">Node D</option>
+                <option value="nodeE">Node E</option>
+                <option value="nodeF">Node F</option>
+                <option value="nodeG">Node G</option>
+                <option value="nodeH">Node H</option>
+                <option value="nodeI">Node I</option>
               </select>
             </label>
 
@@ -69,19 +137,21 @@
 
             <div class="encryption-output">
               <p><b>Encrypted (base64):</b></p>
-              <textarea id="encryptedText" readonly rows="3"></textarea>
+              <textarea id="encryptedText" readonly rows="3" style="width:100%"></textarea>
               <p><b>Decrypted at Receiver:</b> <span id="decryptedText">—</span></p>
             </div>
           </div>
 
-          <div class="log">
+          <div class="log" style="margin-top:12px;">
             <h4>Message Log</h4>
-            <table id="logTable">
+            <div style="max-height:220px;overflow:auto;">
+            <table id="logTable" style="width:100%;border-collapse:collapse;">
               <thead>
                 <tr><th>Time</th><th>Sender</th><th>Receiver</th><th>Encrypted</th><th>Decrypted</th><th>Status</th></tr>
               </thead>
               <tbody></tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>
