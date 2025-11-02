@@ -28,6 +28,7 @@
         <button class="tab-btn" data-target="motivation">Motivation</button>
         <button class="tab-btn" data-target="problem">Problem</button>
         <button class="tab-btn" data-target="techniques">Techniques</button>
+        <button class="tab-btn" data-target="working">Working Principle</button>
         <button class="tab-btn" data-target="results">Results</button>
       </div>
 
@@ -39,9 +40,7 @@
 
         <h3>Objective</h3>
         <p>
-          The aim of this project is to develop a secure, lightweight, and reliable communication protocol that can function during natural disasters when regular telecom infrastructure is unavailable.
-          The protocol will work over a mesh network, allowing encrypted device-to-device (D2D) communication among rescue teams.
-          The project also includes a digital storytelling component to visualize the disaster situation and the effectiveness of our solution.
+          The aim of this project is to develop a secure, lightweight, and reliable communication protocol that can function during natural disasters when regular telecom infrastructure is unavailable. The protocol will work over a mesh network, allowing encrypted device-to-device (D2D) communication among rescue teams. The project also includes a digital storytelling component to visualize the disaster situation and the effectiveness of our solution.
         </p>
 
         <div class="diagram">
@@ -98,6 +97,25 @@
         </ul>
       </div>
 
+      <!-- Working Principle -->
+      <div id="working" class="tab-content">
+        <h3>Working Principle</h3>
+        <p>
+          The secure communication protocol operates on a <b>mesh-based network</b> designed for disaster areas with no existing connectivity.
+          The core components involved are:
+        </p>
+        <ul>
+          <li><b>Node Initialization:</b> Each device joins the mesh network and generates a unique device identifier.
+          <li><b>Key Generation:</b> Lightweight symmetric encryption (e.g., AES-128) is used. Devices exchange keys using a secure handshake.</li>
+          <li><b>Message Encryption:</b> The sender encrypts the rescue message using the shared session key.</li>
+          <li><b>Multi-hop Forwarding:</b> The encrypted packet is forwarded across nearby nodes using the mesh routing protocol.</li>
+          <li><b>Decryption at Destination:</b> Only the intended node with the correct key can decrypt the message.</li>
+        </ul>
+        <p>
+          This protocol ensures <b>confidentiality, authenticity, and resilience</b> even when traditional telecom services fail.
+        </p>
+      </div>
+
       <!-- Results -->
       <div id="results" class="tab-content">
         <h3>Expected Inputs / Outputs / Results</h3>
@@ -112,7 +130,7 @@
         </p>
 
         <div class="demo">
-          <h3>!  Working Demo  !</h3>
+          <h3>! Working Demo !</h3>
           <button class="demo-btn">Launch Simulation</button>
         </div>
       </div>
