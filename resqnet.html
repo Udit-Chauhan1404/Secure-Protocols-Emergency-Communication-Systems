@@ -6,7 +6,7 @@
   <title>ResQNet — Secure D2D Simulator</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* minimal local styles to help the 9-node layout */
+    /* keep your local node layout styles, plus small styles for new path-table & controls */
     .net-stage {
       position: relative;
       width: 100%;
@@ -15,8 +15,7 @@
       border-radius: 10px;
       overflow: hidden;
     }
-    /* place nodes in a 3x3 visual grid using absolute positions for clarity */
-    .node { 
+    .node {
       position: absolute;
       width: 62px;
       height: 62px;
@@ -33,7 +32,6 @@
       transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     .node:hover { transform: scale(1.06); box-shadow: 0 10px 24px rgba(0,255,255,0.16); }
-    /* grid positions (top-left → top-right, middle, bottom) */
     #nodeA { left: 8%; top: 8%; }
     #nodeB { left: 44%; top: 8%; transform: translateX(-50%); }
     #nodeC { right: 8%; top: 8%; }
@@ -43,7 +41,7 @@
     #nodeG { left: 8%; bottom: 8%; }
     #nodeH { left: 44%; bottom: 8%; transform: translateX(-50%); }
     #nodeI { right: 8%; bottom: 8%; }
-    /* packet label style created by JS can be tuned via .packet-label, and .packet is set inline */
+
     .packet-label {
       pointer-events: none;
       font-size: 0.75rem;
@@ -56,6 +54,54 @@
       color: #052024;
       z-index: 1000;
       position: absolute;
+    }
+
+    /* New path table & actions (styled to match existing log) */
+    .path-panel {
+      margin-top: 14px;
+      background: rgba(255,255,255,0.02);
+      padding: 0.7rem;
+      border-radius: 10px;
+      width: 100%;
+    }
+    #pathTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      min-width: 600px;
+    }
+    #pathTable th, #pathTable td {
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px dashed rgba(255,255,255,0.03);
+      color: #dffbfb;
+      text-align: left;
+    }
+    #pathTable th {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .table-controls {
+      display:flex;
+      gap:10px;
+      margin-top:8px;
+      align-items:center;
+    }
+    .table-controls button {
+      background-color: #00f0ff;
+      color: #002022;
+      font-weight: 700;
+      border: 2px solid #00e6e6;
+      border-radius: 8px;
+      padding: 0.5rem 0.8rem;
+      cursor: pointer;
+    }
+    .table-controls button:hover { transform: scale(1.03); }
+
+    /* small responsive tweak */
+    @media (max-width:980px) {
+      .path-panel { overflow-x:auto; }
     }
   </style>
 </head>
@@ -89,6 +135,25 @@
           <div class="legend">
             <small>Nodes represent devices/field units. Lines show mesh connectivity.</small>
           </div>
+
+          <!-- Path followed panel (new) -->
+          <div class="path-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h4 style="margin:0;color:#cfeff0;">Path Followed</h4>
+              <div class="table-controls">
+                <button id="downloadPath">Download Path Log (CSV)</button>
+                <button id="clearPath">Clear Path Log</button>
+              </div>
+            </div>
+            <div style="max-height:220px;overflow:auto;">
+              <table id="pathTable">
+                <thead>
+                  <tr><th>Packet ID</th><th>Source</th><th>Destination</th><th>Path</th><th>Timestamp</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- CONTROL / LOG PANEL -->
@@ -112,6 +177,7 @@
             <label>Receiver
               <select id="receiverSelect">
                 <option value="">Select Receiver</option>
+                <option value="BROADCAST">BROADCAST (All Nodes)</option>
                 <option value="nodeA">Node A</option>
                 <option value="nodeB">Node B</option>
                 <option value="nodeC">Node C</option>
@@ -144,6 +210,13 @@
 
           <div class="log" style="margin-top:12px;">
             <h4>Message Log</h4>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div style="font-size:0.9rem;color:#cfeff0;">Recent messages</div>
+              <div style="display:flex;gap:8px;">
+                <button id="downloadMsg" class="demo-btn" style="padding:0.4rem 0.7rem;">Download Log (CSV)</button>
+                <button id="clearMsg" class="demo-btn" style="padding:0.4rem 0.7rem;">Clear Log</button>
+              </div>
+            </div>
             <div style="max-height:220px;overflow:auto;">
             <table id="logTable" style="width:100%;border-collapse:collapse;">
               <thead>
