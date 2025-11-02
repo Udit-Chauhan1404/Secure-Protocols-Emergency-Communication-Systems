@@ -39,9 +39,21 @@ tabs.forEach((tab) => {
   });
 });
 
-// Demo button (future simulation)
+// Demo button (project page) - open simulator page
 const demoBtn = document.querySelector(".demo-btn");
-// (kept for later — may be repurposed to open simulator page)
+if (demoBtn && demoBtn.dataset && demoBtn.dataset.replaceHandled !== "true") {
+  // We'll handle demo button behavior later inside the simulator IIFE if needed.
+  // But ensure project page's Launch Simulation opens resqnet.html
+  document.querySelectorAll(".demo-btn").forEach(db => {
+    // Only attach for the project page demo button (it contains text "Launch Simulation")
+    if (db.textContent && db.textContent.includes("Launch Simulation")) {
+      db.addEventListener("click", (e) => {
+        window.open("resqnet.html", "_blank");
+      });
+    }
+  });
+  if (demoBtn.dataset) demoBtn.dataset.replaceHandled = "true";
+}
 
 /* ---------------- ResQNet Simulator JS (append) ---------------- */
 
@@ -263,14 +275,7 @@ const demoBtn = document.querySelector(".demo-btn");
   // If simulator DOM not present, skip rest
   const sendBtn = document.getElementById("sendBtn");
   if (!sendBtn) {
-    // also replace old demo button behavior if present (project page demo button)
-    if (demoBtn && demoBtn.dataset && demoBtn.dataset.replaceHandled !== "true") {
-      demoBtn.dataset.replaceHandled = "true";
-      demoBtn.addEventListener("click", (e) => {
-        // open simulator in new tab
-        window.open("resqnet.html", "_blank");
-      });
-    }
+    // nothing else to do on non-simulator pages
     return;
   }
 
@@ -282,7 +287,12 @@ const demoBtn = document.querySelector(".demo-btn");
   const encTextEl = document.getElementById("encryptedText");
   const decTextEl = document.getElementById("decryptedText");
   const logTableBody = document.querySelector("#logTable tbody");
+  const pathTableBody = document.querySelector("#pathTable tbody");
   const netStage = document.getElementById("net-stage") || document.querySelector(".net-stage");
+  const downloadPathBtn = document.getElementById("downloadPath");
+  const clearPathBtn = document.getElementById("clearPath");
+  const downloadMsgBtn = document.getElementById("downloadMsg");
+  const clearMsgBtn = document.getElementById("clearMsg");
 
   // small helper to map node id -> element
   function nodeEl(id) { return document.getElementById(id); }
@@ -353,7 +363,57 @@ const demoBtn = document.querySelector(".demo-btn");
     return path;
   }
 
-  // Handle send: now with shortest-path hop-by-hop animation
+  // Logging arrays for CSV download
+  const messageLog = []; // each entry: {time, sender, receiver, encrypted, decrypted, status}
+  const pathLog = [];    // each entry: {packetId, source, destination, path, timestamp}
+  let packetCounter = 1;
+
+  function prependMessageLogRow(timeStr, senderLabel, receiverLabel, encrypted, decrypted, statusHTML) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${timeStr}</td>
+      <td>${escapedHtml(senderLabel)}</td>
+      <td>${escapedHtml(receiverLabel)}</td>
+      <td style="max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${escapedHtml(encrypted)}</td>
+      <td>${decrypted === null ? "—" : escapedHtml(decrypted)}</td>
+      <td>${statusHTML}</td>
+    `;
+    if (logTableBody) logTableBody.prepend(row);
+  }
+
+  function prependPathRow(packetId, sourceLabel, destLabel, pathArr) {
+    const row = document.createElement("tr");
+    const timeStr = new Date().toLocaleTimeString();
+    row.innerHTML = `<td>${escapedHtml(packetId)}</td><td>${escapedHtml(sourceLabel)}</td><td>${escapedHtml(destLabel)}</td><td>${escapedHtml(pathArr.join(" → "))}</td><td>${timeStr}</td>`;
+    if (pathTableBody) pathTableBody.prepend(row);
+  }
+
+  function downloadCSVFromArray(arr, filename) {
+    if (!arr || !arr.length) {
+      alert("No data to download.");
+      return;
+    }
+    const headers = Object.keys(arr[0]);
+    const csvRows = [ headers.join(",") ];
+    for (const row of arr) {
+      const vals = headers.map(h => {
+        let v = row[h];
+        if (v === null || v === undefined) v = "";
+        // escape quotes
+        v = String(v).replace(/"/g, '""');
+        // surround if comma present
+        return v.includes(",") ? `"${v}"` : v;
+      });
+      csvRows.push(vals.join(","));
+    }
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Handle send: supports BROADCAST or single receiver
   async function handleSend() {
     const senderId = senderSelect.value;
     const receiverId = receiverSelect.value;
@@ -361,8 +421,7 @@ const demoBtn = document.querySelector(".demo-btn");
     const pass = (passphraseInput.value || "").trim() || "ResQNetKey2025";
 
     if (!plaintext) { alert("Please type a message to send."); return; }
-    if (!senderId || !receiverId) { alert("Please select sender and receiver."); return; }
-    if (senderId === receiverId) { alert("Sender and receiver must be different nodes."); return; }
+    if (!senderId) { alert("Please select sender."); return; }
 
     sendBtn.disabled = true;
     const prevText = sendBtn.textContent;
@@ -383,11 +442,15 @@ const demoBtn = document.querySelector(".demo-btn");
       return;
     }
 
-    // compute path
-    const path = shortestPath(senderId, receiverId);
-    if (!path || path.length < 2) {
-      alert("No path found between selected nodes.");
-      // restore UI and exit
+    // compute targets
+    const allNodes = ["nodeA","nodeB","nodeC","nodeD","nodeE","nodeF","nodeG","nodeH","nodeI"];
+    let targets;
+    if (receiverId === "BROADCAST") {
+      targets = allNodes.filter(n => n !== senderId);
+    } else if (receiverId) {
+      targets = [receiverId];
+    } else {
+      alert("Please select a receiver (or BROADCAST).");
       sendBtn.disabled = false;
       sendBtn.textContent = prevText;
       return;
@@ -400,42 +463,89 @@ const demoBtn = document.querySelector(".demo-btn");
       setTimeout(() => { senderEl.style.transform = ""; }, 180);
     }
 
-    // animate hop-by-hop sequentially (await each hop)
-    for (let i = 0; i < path.length - 1; i++) {
-      const hopFrom = nodeEl(path[i]);
-      const hopTo = nodeEl(path[i+1]);
-      try {
-        await animatePacketBezier(hopFrom || { }, hopTo || { }, plaintext, { duration: 800, curveOffset: 60 });
-      } catch (e) {
-        console.warn("animate hop error", e);
+    // Use same packet id base for this send operation (increment per target)
+    // We'll generate one packet ID per target to log them separately
+    const keyForDecrypt = await deriveKeyFromPassphrase(pass);
+
+    // For concurrent broadcast we will create tasks
+    const tasks = targets.map(async (targetId) => {
+      const packetId = `P${packetCounter++}`;
+      const path = shortestPath(senderId, targetId);
+      if (!path || path.length < 2) {
+        // log failure path
+        const timeStr = new Date().toLocaleTimeString();
+        messageLog.unshift({
+          time: timeStr,
+          sender: (nodeEl(senderId) && nodeEl(senderId).dataset.label) || senderId,
+          receiver: (nodeEl(targetId) && nodeEl(targetId).dataset.label) || targetId,
+          encrypted: ciphertext || "",
+          decrypted: null,
+          status: "Failed"
+        });
+        prependMessageLogRow(timeStr, (nodeEl(senderId) && nodeEl(senderId).dataset.label) || senderId, (nodeEl(targetId) && nodeEl(targetId).dataset.label) || targetId, ciphertext || "", null, "<span style='color:#ff9a9a'>Failed</span>");
+        prependPathRow(packetId, (nodeEl(senderId) && nodeEl(senderId).dataset.label) || senderId, (nodeEl(targetId) && nodeEl(targetId).dataset.label) || targetId, ["No Path"]);
+        return;
       }
+
+      // animate hop-by-hop sequentially for this target
+      for (let i = 0; i < path.length - 1; i++) {
+        const hopFrom = nodeEl(path[i]);
+        const hopTo = nodeEl(path[i+1]);
+        try {
+          await animatePacketBezier(hopFrom || {}, hopTo || {}, plaintext, { duration: 700, curveOffset: 60 });
+        } catch (e) {
+          console.warn("animate hop error", e);
+        }
+      }
+
+      // simulate receiver decryption
+      let decrypted = null;
+      try {
+        decrypted = await decryptAESGCM(keyForDecrypt, ciphertext, iv);
+      } catch (e) {
+        decrypted = null;
+      }
+
+      // Build log entries
+      const timeStr = new Date().toLocaleTimeString();
+      const senderLabel = (nodeEl(senderId) && nodeEl(senderId).dataset.label) || senderId;
+      const receiverLabel = (nodeEl(targetId) && nodeEl(targetId).dataset.label) || targetId;
+
+      messageLog.unshift({
+        time: timeStr,
+        sender: senderLabel,
+        receiver: receiverLabel,
+        encrypted: ciphertext,
+        decrypted: decrypted,
+        status: decrypted ? "Delivered" : "Failed"
+      });
+
+      prependMessageLogRow(timeStr, senderLabel, receiverLabel, ciphertext, decrypted, decrypted ? "<span style='color:#b9ffd7'>Delivered</span>" : "<span style='color:#ff9a9a'>Failed</span>");
+
+      // path log
+      pathLog.unshift({
+        packetId,
+        source: senderLabel,
+        destination: receiverLabel,
+        path: path.map(p => (nodeEl(p) && nodeEl(p).dataset.label) || p).join(" → "),
+        timestamp: timeStr
+      });
+      // also add UI row
+      prependPathRow(packetId, senderLabel, receiverLabel, path.map(p => (nodeEl(p) && nodeEl(p).dataset.label) || p));
+    });
+
+    // Wait for all deliveries (if broadcast) to finish
+    await Promise.all(tasks);
+
+    // show decrypted for single receiver in UI; for broadcast show 'Multiple' or last
+    if (targets.length === 1) {
+      const lastEntry = messageLog[0];
+      decTextEl.textContent = lastEntry.decrypted === null ? "[DECRYPTION FAILED]" : lastEntry.decrypted;
+    } else {
+      decTextEl.textContent = "Multiple";
     }
 
-    // simulate receiver decryption
-    let decrypted = null;
-    try {
-      const receiverKey = await deriveKeyFromPassphrase(pass);
-      decrypted = await decryptAESGCM(receiverKey, ciphertext, iv);
-      if (decTextEl) decTextEl.textContent = decrypted === null ? "[DECRYPTION FAILED]" : decrypted;
-    } catch (e) {
-      decrypted = null;
-      if (decTextEl) decTextEl.textContent = "[DECRYPTION FAILED]";
-    }
-
-    // Log entry (after animation)
-    const row = document.createElement("tr");
-    const timeStr = new Date().toLocaleTimeString();
-    row.innerHTML = `
-      <td>${timeStr}</td>
-      <td>${escapedHtml((nodeEl(senderId) && nodeEl(senderId).dataset.label) || senderId)}</td>
-      <td>${escapedHtml((nodeEl(receiverId) && nodeEl(receiverId).dataset.label) || receiverId)}</td>
-      <td style="max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${escapedHtml(ciphertext)}</td>
-      <td>${decrypted === null ? "—" : escapedHtml(decrypted)}</td>
-      <td>${decrypted === null ? "<span style='color:#ff9a9a'>Failed</span>" : "<span style='color:#b9ffd7'>Delivered</span>"}</td>
-    `;
-    if (logTableBody) logTableBody.prepend(row);
-
-    // restore send button
+    // Restore UI
     sendBtn.disabled = false;
     sendBtn.textContent = prevText;
     messageInput.value = "";
@@ -501,6 +611,46 @@ const demoBtn = document.querySelector(".demo-btn");
       el.style.transform = "translateY(-8px) scale(1.03)";
       setTimeout(()=> el.style.transform = "", 220);
     });
+  });
+
+  // Path & Message CSV download + clear handlers
+  downloadPathBtn.addEventListener("click", () => {
+    if (!pathLog.length) return alert("No path log entries.");
+    // convert pathLog entries to consistent csv objects
+    const csvData = pathLog.map(p => ({
+      PacketID: p.packetId,
+      Source: p.source,
+      Destination: p.destination,
+      Path: p.path,
+      Timestamp: p.timestamp
+    }));
+    downloadCSVFromArray(csvData, "resqnet_path_log.csv");
+  });
+
+  clearPathBtn.addEventListener("click", () => {
+    if (!confirm("Clear all entries from Path Followed log?")) return;
+    pathLog.length = 0;
+    // clear UI rows
+    if (pathTableBody) pathTableBody.innerHTML = "";
+  });
+
+  downloadMsgBtn.addEventListener("click", () => {
+    if (!messageLog.length) return alert("No message log entries.");
+    const csvData = messageLog.map(m => ({
+      Time: m.time,
+      Sender: m.sender,
+      Receiver: m.receiver,
+      Encrypted: m.encrypted,
+      Decrypted: m.decrypted,
+      Status: m.status
+    }));
+    downloadCSVFromArray(csvData, "resqnet_message_log.csv");
+  });
+
+  clearMsgBtn.addEventListener("click", () => {
+    if (!confirm("Clear all entries from Message Log?")) return;
+    messageLog.length = 0;
+    if (logTableBody) logTableBody.innerHTML = "";
   });
 
   // done
