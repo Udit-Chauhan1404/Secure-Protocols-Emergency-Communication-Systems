@@ -226,7 +226,7 @@ footer {
 /* Grid layout */
 .sim-grid {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: 1fr 480px; /* increased width for control panel */
   gap: 1.2rem;
   align-items: start;
 }
@@ -260,7 +260,7 @@ footer {
   transition: transform 0.18s ease;
 }
 
-.node::after{
+.node::after {
   content: attr(data-label);
   position: absolute;
   bottom: -22px;
@@ -392,14 +392,18 @@ footer {
   background: rgba(255,255,255,0.02);
   padding: 0.7rem;
   border-radius: 10px;
-  max-height: 220px;
-  overflow: auto;
+  max-height: 240px;
+  overflow-x: auto;
+  overflow-y: auto;
+  width: 100%;
 }
 
 #logTable {
   width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 0.85rem;
+  min-width: 600px; /* ensures full table visible */
 }
 
 #logTable th, #logTable td {
@@ -421,4 +425,10 @@ footer {
     grid-template-columns: 1fr;
   }
   .net-stage { height: 360px; }
+  .log {
+    max-height: 260px;
+    width: 100%;
+  }
 }
+
+
