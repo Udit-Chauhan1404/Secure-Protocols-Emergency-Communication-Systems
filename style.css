@@ -457,4 +457,9 @@ footer {
   border: 3px solid #333;
 }
 
+#helpModal .modal-content {
+  max-height: 70vh; /* you can increase if needed */
+  overflow-y: auto;
+  padding-right: 10px; /* avoids overlap with scrollbar */
+}
 
