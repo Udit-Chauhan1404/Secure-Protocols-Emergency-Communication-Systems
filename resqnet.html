@@ -7,6 +7,43 @@
   <link rel="stylesheet" href="style.css" />
   <style>
     /* keep your local node layout styles, plus small styles for new path-table & controls */
+    :root{
+      --glass: rgba(255,255,255,0.06);
+      --accent1: #00f0ff;
+      --accent2: #2575fc;
+      --card-bg: rgba(255,255,255,0.06);
+      --glass-strong: rgba(255,255,255,0.12);
+    }
+
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(120deg,#0f2027 0%, #203a43 50%, #2c5364 100%);color:#e8fbfb;}
+    nav{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      padding:14px 22px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(2,12,20,0.45);
+      border-radius: 0 0 14px 14px;
+      margin: 12px;
+    }
+    nav h1{margin:0;font-weight:700;letter-spacing:1px;font-size:1.1rem;color:#f1fbfb;}
+    .nav-actions{margin-left:auto;display:flex;gap:12px;align-items:center;}
+
+    /* modern pill buttons */
+    .pill {
+      display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:none;cursor:pointer;font-weight:700;
+      color:#031a1a;text-decoration:none;background:linear-gradient(135deg,var(--accent1),#66a6ff);
+      box-shadow: 0 6px 18px rgba(38,150,255,0.14), inset 0 -2px 6px rgba(255,255,255,0.06);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .pill:active{transform:translateY(1px);}
+    .pill.ghost { background: transparent; color: #dffbfb; border: 1px solid rgba(255,255,255,0.06); box-shadow:none; padding:8px 12px; }
+
+    /* page layout */
+    main{padding:18px;margin: 6px 12px 36px;}
+    .sim-panel.card{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:20px;border-radius:12px;box-shadow: 0 12px 30px rgba(0,0,0,0.35);}
+
     .net-stage {
       position: relative;
       width: 100%;
@@ -75,6 +112,7 @@
       border-bottom: 1px dashed rgba(255,255,255,0.03);
       color: #dffbfb;
       text-align: left;
+      font-size:13px;
     }
     #pathTable th {
       position: sticky;
@@ -89,7 +127,7 @@
       align-items:center;
     }
     .table-controls button {
-      background-color: #00f0ff;
+      background-color: var(--accent1);
       color: #002022;
       font-weight: 700;
       border: 2px solid #00e6e6;
@@ -99,16 +137,61 @@
     }
     .table-controls button:hover { transform: scale(1.03); }
 
-    /* small responsive tweak */
-    @media (max-width:980px) {
-      .path-panel { overflow-x:auto; }
+    /* control panel */
+    .control-panel { width:420px; min-width:320px; }
+    .controls label{ display:block;font-size:14px;color:#dffbfb;margin-bottom:6px;}
+    .controls select,.controls input[type="text"]{ width:100%; padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#eaffff;}
+    .demo-btn{ background:linear-gradient(135deg,#00f0ff,#2575fc); color:#012; padding:10px 12px; border-radius:8px;border:none;font-weight:800;cursor:pointer;}
+    .demo-btn:hover{ transform:translateY(-2px); }
+
+    .encryption-output textarea{background:rgba(0,0,0,0.18);color:#eaffff;border-radius:6px;padding:8px;border:1px solid rgba(255,255,255,0.04);}
+
+    /* log table */
+    #logTable th,#logTable td{ padding:8px 6px; border-bottom:1px dashed rgba(255,255,255,0.03); color:#dffbfb;font-size:13px;text-align:left;}
+    #logTable thead th{ position: sticky; top:0; background: rgba(255,255,255,0.02); }
+
+    footer{ text-align:center;color:#cfeff0; margin-top:22px; opacity:0.9; }
+
+    /* OVERLAY & MODAL (kept minimal to avoid conflicts with your style.css) */
+    .overlay{ position:fixed; inset:0; background: rgba(0,0,0,0.6); display:none; z-index:1200; backdrop-filter: blur(4px); }
+    .modal {
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.98);
+      width:760px; max-width:96%; background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(255,255,255,0.95));
+      color:#122; border-radius:14px; box-shadow: 0 18px 50px rgba(2,18,30,0.5); padding:22px; z-index:1250; display:none;
+    }
+    .modal.active, .overlay.active{ display:block; }
+    .modal h3{ margin:0 0 10px 0; font-size:20px; color:#0b3a3a; }
+    .modal p{ color:#244; line-height:1.45; font-size:14px; }
+    .modal .close { position:absolute; right:14px; top:14px; background:transparent;border:none;font-weight:800;cursor:pointer;color:#444;font-size:16px; }
+    .modal .row{ display:flex; gap:14px; margin-top:12px; }
+    .modal .col{ flex:1; background:transparent; padding:8px; border-radius:8px; }
+
+    .help-steps { list-style:none; padding:0; margin:6px 0 0 0; }
+    .help-steps li{ margin:10px 0; background: linear-gradient(180deg, #f7fffd, #f0ffff); border-radius:8px;padding:10px;border-left:6px solid var(--accent1); color:#083233; box-shadow: 0 6px 20px rgba(34,170,190,0.05); font-size:14px; }
+
+    /* Make the HELP modal content scrollable without changing other layout */
+    #helpModal .modal-content {
+      max-height: 66vh;       /* fits within viewport */
+      overflow-y: auto;
+      padding-right: 8px;     /* avoid overlap with scrollbar */
+    }
+
+    /* responsive */
+    @media (max-width:980px){
+      .modal{ width:92%; padding:16px; }
+      .control-panel{ width:100%; }
+      .sim-grid{ flex-direction:column; }
     }
   </style>
 </head>
 <body>
   <nav>
     <h1>ResQNet</h1>
-    <a href="project.html" class="nav-btn">← Back to Project</a>
+    <div class="nav-actions">
+      <a href="project.html" class="pill ghost">← Back to Project</a>
+      <button class="pill" id="learnBtn">Learn</button>
+      <button class="pill" id="helpBtn">Help</button>
+    </div>
   </nav>
 
   <main class="sim-page">
@@ -235,6 +318,193 @@
     <p>© 2025 ResQNet | VIT Chennai</p>
   </footer>
 
+  <!-- OVERLAY & MODALS -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- HELP Modal (scrollable content inside .modal-content) -->
+  <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <button class="close" onclick="closeModal('helpModal')">✕</button>
+    <h3 id="helpTitle">How to use the Simulator — Step by step</h3>
+
+    <!-- modal-content wrapper makes the help scrollable -->
+    <div class="modal-content">
+      <div class="row">
+        <div class="col">
+          <p>This guide explains every input and how to run the simulation. Follow the steps below in order.</p>
+          <ul class="help-steps">
+            <li><b>Step 1 — Choose Sender:</b> From the <i>Sender</i> dropdown pick the node which should originate the message (e.g., Node A). This is the device that sends the encrypted packet.</li>
+            <li><b>Step 2 — Choose Receiver:</b> From the <i>Receiver</i> dropdown pick a target node or choose <i>BROADCAST</i> to send to <u>all</u> nodes.</li>
+            <li><b>Step 3 — Set Passphrase:</b> The <i>Passphrase</i> is the shared symmetric key used for encryption in this demo. Keep it the same on sender & receiver to simulate a trusted session. Change it to simulate different sessions or failed decryption.</li>
+            <li><b>Step 4 — Type Message:</b> Enter the plaintext message (e.g., <code>HELP</code> or <code>LOCATION</code>). Short messages work best for demo clarity.</li>
+            <li><b>Step 5 — Send:</b> Click <i>Send Secure Message</i>. The UI will show the base64 encrypted payload and display the decrypted text at the receiver (if passphrase matches).</li>
+            <li><b>Step 6 — Read Logs:</b> The Message Log records the timestamp, sender, receiver, encrypted payload and decrypted result. Use <i>Download Log (CSV)</i> to export or <i>Clear Log</i> to reset.</li>
+            <li><b>Step 7 — Path Table:</b> When a packet traverses intermediate nodes, its actual path (e.g., A → E → F → I) is logged in the <i>Path Followed</i> table. Use <i>Download Path Log (CSV)</i> to export it.</li>
+            <li><b>Notes on BROADCAST:</b> If you pick <i>BROADCAST</i>, the simulator sends the encrypted message to every node. Each node will attempt to decrypt using the passphrase you provided.</li>
+          </ul>
+
+          <p style="margin-top:10px;"><b>Troubleshooting & Tips</b></p>
+          <ul class="help-steps" style="list-style:none;padding:0;">
+            <li><b>Wrong decrypted output:</b> Make sure both sender and receiver use the same passphrase. Change passphrase to test decryption failure.</li>
+            <li><b>No message sent:</b> Ensure you selected a Sender and a Receiver and entered a message.</li>
+            <li><b>Log missing path entries:</b> Some runs (e.g., direct neighbors) have minimal hops; intermediate nodes are only shown when routing is simulated.</li>
+            <li><b>Export issues:</b> CSV downloads open in spreadsheet apps; use "Save As" when browser shows the CSV content.</li>
+          </ul>
+        </div>
+
+        <div class="col">
+          <p><b>Shortcuts & tips:</b></p>
+          <p style="font-size:13px;color:#123;padding:8px;background:#f3ffff;border-radius:8px;border-left:6px solid var(--accent1);">
+            On mobile, use portrait view and scroll — controls collapse under the network. The passphrase is visible for educational purposes only — never expose real keys in production.
+          </p>
+
+          <div style="margin-top:12px;">
+            <div style="padding:10px;background:#f8ffff;border-radius:8px;border-left:6px solid var(--accent2);">
+              <strong>Quick reference</strong>
+              <ul style="margin:8px 0 0 14px;color:#044;">
+                <li>Click node → sets Sender</li>
+                <li>Shift+Click node → sets Receiver</li>
+                <li>Broadcast sends to all nodes</li>
+                <li>Use CSV exports for offline analysis</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end modal-content -->
+
+  </div>
+
+  <!-- LEARN Modal -->
+  <div id="learnModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="learnTitle">
+  <button class="close" onclick="closeModal('learnModal')">✕</button>
+  <h3 id="learnTitle">Learn — Network Concepts Used in ResQNet</h3>
+
+  <div style="max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding-right:8px;">
+
+    <!-- Original Demo Features Block -->
+    <div style="padding:10px;background:#f8ffff;border-radius:8px;border-left:6px solid var(--accent2);">
+      <strong>Demo Features</strong>
+      <ul style="margin:8px 0 0 14px;color:#044;">
+        <li>Encrypt & decrypt messages (base64 display)</li>
+        <li>Broadcast vs unicast simulation</li>
+        <li>Message & path logs with CSV export</li>
+      </ul>
+    </div>
+
+    <!-- Original Learning Outcomes Block -->
+    <div style="padding:10px;background:#f8ffff;border-radius:8px;border-left:6px solid var(--accent1);">
+      <strong>Learning Outcomes</strong>
+      <ul style="margin:8px 0 0 14px;color:#044;">
+        <li>How symmetric passphrases affect decryption</li>
+        <li>How mesh nodes forward packets</li>
+        <li>How logs and packet paths help debugging</li>
+      </ul>
+    </div>
+
+    <!-- Dijkstra’s Algorithm -->
+    <div style="padding:12px;background:#f8ffff;border-radius:8px;border-left:6px solid #4CAF50;">
+      <strong style="font-size:1.1rem;">Dijkstra’s Algorithm (Shortest Path Routing)</strong>
+      <ul style="margin:8px 0 0 18px;color:#044;line-height:1.4;">
+        <li>Calculates the shortest path from a source to all other nodes in a weighted graph.</li>
+        <li>Used in real-world routing protocols like OSPF to create efficient, loop-free routes.</li>
+        <li>Ensures reliable and fast delivery of packets in large mesh networks.</li>
+      </ul>
+    </div>
+
+    <!-- Flooding -->
+    <div style="padding:12px;background:#f8ffff;border-radius:8px;border-left:6px solid #FF5722;">
+      <strong style="font-size:1.1rem;">Flooding Technique (Broadcast Routing)</strong>
+      <ul style="margin:8px 0 0 18px;color:#044;line-height:1.4;">
+        <li>Every incoming packet is sent out through all output links except the one it arrived on.</li>
+        <li>Guarantees that the message reaches every node, even without a predefined route.</li>
+        <li>Ideal for emergency or highly dynamic networks, but can cause traffic overload.</li>
+      </ul>
+    </div>
+
+    <!-- Mesh-based Networking -->
+    <div style="padding:12px;background:#f8ffff;border-radius:8px;border-left:6px solid #2196F3;">
+      <strong style="font-size:1.1rem;">Mesh-based D2D Communication</strong>
+      <ul style="margin:8px 0 0 18px;color:#044;line-height:1.4;">
+        <li>Nodes act as both end devices and relays, forwarding data for others.</li>
+        <li>Creates a self-healing and adaptive network — no single point of failure.</li>
+        <li>Used for communication in disaster zones when cell towers are inaccessible.</li>
+      </ul>
+    </div>
+
+    <!-- AES Encryption Block -->
+    <div style="padding:12px;background:#f8ffff;border-radius:8px;border-left:6px solid #9C27B0;">
+      <strong style="font-size:1.1rem;">AES Encryption (Secure Communication)</strong>
+      <ul style="margin:8px 0 0 18px;color:#044;line-height:1.4;">
+        <li>Advanced Encryption Standard, widely used in modern cybersecurity applications.</li>
+        <li>Symmetric encryption: same key used for encrypting and decrypting messages.</li>
+        <li>Ensures privacy, integrity, and security even when passed through multiple relays.</li>
+      </ul>
+    </div>
+
+    <!-- Packet Logs & Route Tracing -->
+    <div style="padding:12px;background:#f8ffff;border-radius:8px;border-left:6px solid #FF9800;">
+      <strong style="font-size:1.1rem;">Packet Logs & Route Tracing</strong>
+      <ul style="margin:8px 0 0 18px;color:#044;line-height:1.4;">
+        <li>Logs the entire path followed by each packet through the network.</li>
+        <li>Helps analyze message flow and routing behavior.</li>
+        <li>CSV export helps offline analysis and report preparation.</li>
+      </ul>
+    </div>
+
+    <!-- Networking in Disaster Scenarios -->
+    <div style="padding:12px;background:#f8ffff;border-radius:8px;border-left:6px solid #795548;">
+      <strong style="font-size:1.1rem;">Networking in Disaster Relief Scenarios</strong>
+      <ul style="margin:8px 0 0 18px;color:#044;line-height:1.4;">
+        <li>No dependence on centralized wireless or tower infrastructure.</li>
+        <li>Allows communication between first responders and affected civilians.</li>
+        <li>Built for remote or disrupted areas with minimal power.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+
+  <script>
+    // modal handling - minimal and compatible with your existing scripts
+    const overlay = document.getElementById('overlay');
+    const helpBtn = document.getElementById('helpBtn');
+    const learnBtn = document.getElementById('learnBtn');
+    const helpModal = document.getElementById('helpModal');
+    const learnModal = document.getElementById('learnModal');
+
+    function openModal(modalEl) {
+      overlay.classList.add('active');
+      modalEl.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+      // if id is a string assume element id; if element, remove active directly
+      if (typeof id === 'string') {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      } else if (id instanceof Element) {
+        id.classList.remove('active');
+      }
+      if (!helpModal.classList.contains('active') && !learnModal.classList.contains('active')) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    helpBtn.addEventListener('click', () => openModal(helpModal));
+    learnBtn.addEventListener('click', () => openModal(learnModal));
+    overlay.addEventListener('click', () => { closeModal('helpModal'); closeModal('learnModal'); });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal('helpModal'); closeModal('learnModal');
+      }
+    });
+  </script>
+
+  <!-- keep your full simulator script (unchanged) -->
   <script src="script.js"></script>
 </body>
 </html>
