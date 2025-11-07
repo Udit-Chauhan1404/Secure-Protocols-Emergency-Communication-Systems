@@ -189,6 +189,7 @@
     <h1>ResQNet</h1>
     <div class="nav-actions">
       <a href="project.html" class="pill ghost">← Back to Project</a>
+      <button class="pill" id="downloadAll">Download</button>
       <button class="pill" id="learnBtn">Learn</button>
       <button class="pill" id="helpBtn">Help</button>
     </div>
@@ -503,6 +504,53 @@
       }
     });
   </script>
+
+  <script>
+    // Export table -> CSV helper
+    function tableToCSV(table) {
+      const rows = Array.from(table.querySelectorAll('tr'));
+      return rows.map(row => {
+        const cols = Array.from(row.querySelectorAll('th,td'));
+        return cols.map(cell => {
+          // escape double-quotes
+          const txt = (cell.textContent || '').trim().replace(/"/g, '""');
+          return '"' + txt + '"';
+        }).join(',');
+      }).join('\r\n');
+    }
+
+    function downloadCSV(filename, csv) {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('download', filename);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // When downloadAll clicked, export both pathTable and logTable as separate CSV files
+    const downloadAllBtn = document.getElementById('downloadAll');
+    if (downloadAllBtn) {
+      downloadAllBtn.addEventListener('click', () => {
+        const pathTable = document.getElementById('pathTable');
+        const logTable = document.getElementById('logTable');
+
+        if (pathTable) {
+          const csv1 = tableToCSV(pathTable);
+          downloadCSV('path-log.csv', csv1);
+        }
+
+        if (logTable) {
+          const csv2 = tableToCSV(logTable);
+          downloadCSV('message-log.csv', csv2);
+        }
+      });
+    }
+  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- keep your full simulator script (unchanged) -->
   <script src="script.js"></script>
