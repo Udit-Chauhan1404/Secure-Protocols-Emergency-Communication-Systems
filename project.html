@@ -5,6 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ResQNet Project</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Popup styles added locally for this page */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      z-index: 1000;
+    }
+
+    .popup-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .popup {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: #fff;
+      padding: 1.25rem;
+      border-radius: 8px;
+      max-width: 600px;
+      width: calc(100% - 40px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.18s ease;
+      z-index: 1001;
+    }
+
+    .popup.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .popup h2 { margin-top: 0; }
+
+  /* Member layout: photos row, details row below */
+  .member-section { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .member-photos, .member-details { display: flex; gap: 1rem; justify-content: space-around; width: 100%; }
+  .member-photos .member, .member-details .member { text-align: center; flex: 1; }
+  .member-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto; }
+
+    .popup img { max-width: 110px; }
+    .popup button { margin-top: 0.5rem; padding: 0.45rem 0.85rem; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .popup hr { border: none; border-top: 1px solid #e6e6e6; margin: 0.75rem 0; }
+  </style>
 </head>
 <body>
   <div id="loader">
@@ -13,7 +65,7 @@
 
   <nav class="hidden">
     <h1>ResQNet</h1>
-    <a href="index.html" class="nav-btn">← Back to Dashboard</a>
+    <button class="nav-btn" type="button" onclick="showPopup('developedByPopup')">Developed By</button>
   </nav>
 
   <section class="project-page hidden">
@@ -136,11 +188,63 @@
       </div>
     </div>
   </section>
+  
+
 
   <footer class="hidden">
     <p>© 2025 ResQNet | VIT Chennai</p>
   </footer>
 
+  <!-- Developed By popup -->
+  <div id="popupOverlay" class="popup-overlay" onclick="closePopup()"></div>
+
+  <div id="developedByPopup" class="popup" role="dialog" aria-modal="true" aria-labelledby="developedByTitle">
+    <h2 id="developedByTitle">Developed By</h2>
+    <div class="member-section">
+      <div class="member-photos">
+        <div class="member">
+          <img src="udit.jpg" alt="Udit Chauhan" />
+        </div>
+        <div class="member">
+          <img src="aditya.jpg" alt="Aditya Gautam" />
+        </div>
+      </div>
+
+      <div class="member-details">
+        <div class="member">
+          <p style="color: #007bff;"><strong>Udit Chauhan</strong><br>24BCE5308</p>
+        </div>
+        <div class="member">
+          <p style="color: #007bff;"><strong>Aditya Gautam</strong><br>24BCE5316</p>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <div style="text-align:center;">
+      <img src="faculty.jpg" alt="Dr. Swaminathan Annadurai" style="width:110px;height:110px;object-fit:cover;border-radius:8px;display:block;margin:0 auto;" />
+      <p style="color: #007bff;"><strong>Dr. Swaminathan Annadurai</strong><br>Faculty Guide</p>
+    </div>
+
+    <div style="text-align:center;">
+      <button onclick="closePopup()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    function showPopup(popupId) {
+      document.getElementById('popupOverlay').classList.add('active');
+      document.getElementById(popupId).classList.add('active');
+    }
+
+    function closePopup() {
+      document.getElementById('popupOverlay').classList.remove('active');
+      document.querySelectorAll('.popup').forEach(popup => popup.classList.remove('active'));
+    }
+  </script>
+
   <script src="script.js"></script>
+
 </body>
 </html>
