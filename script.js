@@ -653,5 +653,49 @@ if (demoBtn && demoBtn.dataset && demoBtn.dataset.replaceHandled !== "true") {
     if (logTableBody) logTableBody.innerHTML = "";
   });
 
+  // Download everything into a .docx document
+// Download everything into a .docx document
+if (downloadAll) {
+  downloadAll.addEventListener("click", async () => {
+    const netStage = document.getElementById("net-stage"); // Fixed ID
+    let imgData = "";
+
+    // Capture network as image
+    if (netStage) {
+      const canvas = await html2canvas(netStage, { backgroundColor: "#ffffff" });
+      imgData = canvas.toDataURL("image/png");
+    }
+
+    // Create the log tables content
+    const logTable = logTableBody ? `<table border="1"><tr><th>Time</th><th>Sender</th><th>Receiver</th><th>Encrypted</th><th>Decrypted</th><th>Status</th></tr>${logTableBody.innerHTML}</table>` : "";
+    const pathTable = pathTableBody ? `<table border="1"><tr><th>Packet ID</th><th>Source</th><th>Destination</th><th>Path</th><th>Timestamp</th></tr>${pathTableBody.innerHTML}</table>` : "";
+
+    const content = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office'
+            xmlns:w='urn:schemas-microsoft-com:office:word'
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>ResQNet Communication Logs</title></head><body>
+        <h2>Node Structure</h2>
+        ${imgData ? `<img src="${imgData}" style="width:100%;max-width:600px;"/>` : "<p>No structure found.</p>"}
+
+        <h2>Message Log</h2>
+        ${logTable || "<p>No data.</p>"}
+  
+        <h2>Path Log</h2>
+        ${pathTable || "<p>No data.</p>"}
+      </body></html>`;
+
+    const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ResQNet_Combined_Logs.doc";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  });
+}
+
   // done
 })();
